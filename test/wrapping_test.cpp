@@ -20,7 +20,7 @@ void log_statistics(const std::vector<double>& times, const std::string& test_ty
 }
 
 void test_single_thread_logging(size_t log_count) {
-    auto logger = slog::LoggerManager::getInstance().getLogger("single_thread");
+    auto logger = slog::LoggerManager::getInstance().CreateLogger("single_thread");
 
     std::vector<double> log_times;
     log_times.reserve(log_count);
@@ -42,6 +42,7 @@ void test_single_thread_logging_define(size_t log_count) {
     std::vector<double> log_times;
     log_times.reserve(log_count);
 
+    slog::LoggerManager::getInstance().CreateLogger("single_thread");
     for (size_t i = 0; i < log_count; ++i) {
         auto start = std::chrono::high_resolution_clock::now();
         SLOG_INFO("single_thread", "Logging message number: {}", i);
@@ -54,7 +55,9 @@ void test_single_thread_logging_define(size_t log_count) {
 }
 
 void test_multi_thread_logging(size_t log_count, size_t thread_count) {
-    auto async_logger = slog::LoggerManager::getInstance().getLogger("multi_thread");
+    slog::LoggerManager::getInstance().init(slog::LoggerConfig(8192, 4));
+
+    auto async_logger = slog::LoggerManager::getInstance().CreateLogger("multi_thread");
     std::vector<std::vector<double>> thread_log_times(thread_count);
 
     auto worker = [&async_logger](size_t thread_id, size_t log_count, std::vector<double>& log_times) {

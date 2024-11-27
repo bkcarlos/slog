@@ -2,8 +2,25 @@
 
 namespace slog {
 
+LoggerManager::LoggerManager()
+    : init_spdlog_pool_(false) {}
+
+LoggerManager::~LoggerManager() {
+    spdlog::shutdown();
+}
+
+void LoggerManager::init(const LoggerConfig& config) {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    spdlog::init_thread_pool(config.queue_size_, config.thread_count_);
+    init_spdlog_pool_ = true;
+    for (const auto& module_logger_config : config.module_logger_configs_) {
+        createLogger(module_logger_config);
+    }
+}
+
 // 获取指定模块的日志器
-std::shared_ptr<Logger> LoggerManager::getLogger(const LoggerConfig& config) {
+std::shared_ptr<spdlog::logger> LoggerManager::CreateLogger(const ModuleLoggerConfig& config) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (loggers_.find(config.module_name_) == loggers_.end()) {
         createLogger(config);
@@ -11,13 +28,21 @@ std::shared_ptr<Logger> LoggerManager::getLogger(const LoggerConfig& config) {
     return loggers_[config.module_name_];
 }
 
-std::shared_ptr<Logger> LoggerManager::getLogger(const std::string& module_name) {
+std::shared_ptr<spdlog::logger> LoggerManager::CreateLogger(const std::string& module_name) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (loggers_.find(module_name) == loggers_.end()) {
-        LoggerConfig config(module_name);
+        ModuleLoggerConfig config(module_name);
         createLogger(config);
     }
     return loggers_[module_name];
+}
+
+std::shared_ptr<spdlog::logger> LoggerManager::getLogger(const std::string& module_name) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (loggers_.find(module_name) != loggers_.end()) {
+        return loggers_[module_name];
+    }
+    return nullptr;
 }
 
 void LoggerManager::setLogLevel(const std::string& module_name, spdlog::level::level_enum level) {
@@ -27,12 +52,12 @@ void LoggerManager::setLogLevel(const std::string& module_name, spdlog::level::l
     }
 }
 
-std::unordered_map<std::string, std::shared_ptr<Logger>> LoggerManager::getAllLoggers() {
+std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> LoggerManager::getAllLoggers() {
     std::lock_guard<std::mutex> lock(mutex_);
     return loggers_;
 }
 
-void LoggerManager::createLogger(const LoggerConfig& config) {
+void LoggerManager::createLogger(const ModuleLoggerConfig& config) {
     std::vector<spdlog::sink_ptr> sinks;
     sinks.reserve(2);
     if (config.use_console_) {
@@ -47,7 +72,12 @@ void LoggerManager::createLogger(const LoggerConfig& config) {
         sinks.push_back(file_sink);
     }
 
-    auto logger = std::make_shared<Logger>(config.module_name_, sinks.begin(), sinks.end());
+    std::shared_ptr<spdlog::logger> logger;
+    if (init_spdlog_pool_) {
+        logger = std::make_shared<spdlog::async_logger>(config.module_name_, sinks.begin(), sinks.end(), spdlog::thread_pool());
+    } else {
+        logger = std::make_shared<spdlog::logger>(config.module_name_, sinks.begin(), sinks.end());
+    }
 
     logger->set_level(config.log_level_);  // 默认等级
     logger->flush_on(config.log_level_);   // 自动刷新日志

@@ -2,9 +2,6 @@
 #define __SLOG_SLOG_H__
 
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/rotating_file_sink.h>
-#include <spdlog/async.h>
 #include <unordered_map>
 #include <memory>
 #include <mutex>
@@ -61,9 +58,9 @@ public:
           log_level_(log_level),
           use_console_(false),
           use_file_(true),
-          max_file_size_(100 * 1024),
+          max_file_size_(10 * 1024 * 1024),
           max_files_(5),
-          pattern_("[%Y-%m-%d %H:%M:%S.%e] [%n] [%^%l%$] %v") {}
+          pattern_("%Y-%m-%d %H:%M:%S.%e %n %^%l%$ %v") {}
 
 public:
     std::string module_name_;
@@ -99,11 +96,11 @@ public:
 
     void init(const LoggerConfig& config);
 
-    std::shared_ptr<spdlog::logger> CreateLogger(const ModuleLoggerConfig& config);
-    std::shared_ptr<spdlog::logger> CreateLogger(const std::string& module_name);
+    const std::shared_ptr<spdlog::logger> CreateLogger(const ModuleLoggerConfig& config);
+    const std::shared_ptr<spdlog::logger> CreateLogger(const std::string& module_name);
 
     // 获取指定模块的日志器,如果不存在返回nullptr
-    std::shared_ptr<spdlog::logger> getLogger(const std::string& module_name);
+    const std::shared_ptr<spdlog::logger> getLogger(const std::string& module_name);
 
     // 动态调整日志器的日志等级
     void setLogLevel(const std::string& module_name, spdlog::level::level_enum level);
@@ -121,7 +118,7 @@ private:
     LoggerManager& operator=(const LoggerManager&) = delete;
 
     // 创建日志器
-    void createLogger(const ModuleLoggerConfig& config);
+    const std::shared_ptr<spdlog::logger> createLogger(const ModuleLoggerConfig& config);
 
 private:
     std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> loggers_;

@@ -12,6 +12,18 @@ spdlog is excellent, but not quite what I need for my business scenarios
 - Log output by module
 - Real-time updating of log levels
 - 
+
+# build
+```
+conan profile detect --force
+conan install . --output-folder=build --build=missing
+cd build
+source conanbuild.sh
+cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug
+cmake --build .
+
+```
+
 # test
 ## 封装后接口性能
 ```

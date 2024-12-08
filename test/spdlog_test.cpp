@@ -1,5 +1,6 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/async.h>
 #include <chrono>
 #include <vector>
@@ -21,7 +22,7 @@ void log_statistics(const std::vector<double>& times, const std::string& test_ty
 }
 
 void test_single_thread_logging(size_t log_count) {
-    auto logger = spdlog::basic_logger_mt("single_thread", "single_thread_log.txt");
+    auto logger = spdlog::rotating_logger_mt("single_thread", "single_thread_log.txt", 5 * 1024 * 1024, 5);
     logger->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] %v");
 
     std::vector<double> log_times;

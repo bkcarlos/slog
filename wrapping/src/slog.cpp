@@ -1,4 +1,7 @@
 #include "slog.h"
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/async.h>
 
 namespace slog {
 
@@ -20,7 +23,7 @@ void LoggerManager::init(const LoggerConfig& config) {
 }
 
 // 获取指定模块的日志器
-std::shared_ptr<spdlog::logger> LoggerManager::CreateLogger(const ModuleLoggerConfig& config) {
+const std::shared_ptr<spdlog::logger> LoggerManager::CreateLogger(const ModuleLoggerConfig& config) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (loggers_.find(config.module_name_) == loggers_.end()) {
         createLogger(config);
@@ -28,7 +31,7 @@ std::shared_ptr<spdlog::logger> LoggerManager::CreateLogger(const ModuleLoggerCo
     return loggers_[config.module_name_];
 }
 
-std::shared_ptr<spdlog::logger> LoggerManager::CreateLogger(const std::string& module_name) {
+const std::shared_ptr<spdlog::logger> LoggerManager::CreateLogger(const std::string& module_name) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (loggers_.find(module_name) == loggers_.end()) {
         ModuleLoggerConfig config(module_name);
@@ -37,7 +40,7 @@ std::shared_ptr<spdlog::logger> LoggerManager::CreateLogger(const std::string& m
     return loggers_[module_name];
 }
 
-std::shared_ptr<spdlog::logger> LoggerManager::getLogger(const std::string& module_name) {
+const std::shared_ptr<spdlog::logger> LoggerManager::getLogger(const std::string& module_name) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (loggers_.find(module_name) != loggers_.end()) {
         return loggers_[module_name];
@@ -57,7 +60,7 @@ std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> LoggerManager::
     return loggers_;
 }
 
-void LoggerManager::createLogger(const ModuleLoggerConfig& config) {
+const std::shared_ptr<spdlog::logger> LoggerManager::createLogger(const ModuleLoggerConfig& config) {
     std::vector<spdlog::sink_ptr> sinks;
     sinks.reserve(2);
     if (config.use_console_) {
@@ -74,7 +77,7 @@ void LoggerManager::createLogger(const ModuleLoggerConfig& config) {
 
     std::shared_ptr<spdlog::logger> logger;
     if (init_spdlog_pool_) {
-        logger = std::make_shared<spdlog::async_logger>(config.module_name_, sinks.begin(), sinks.end(), spdlog::thread_pool());
+        logger = std::make_shared<spdlog::async_logger>(config.module_name_, sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
     } else {
         logger = std::make_shared<spdlog::logger>(config.module_name_, sinks.begin(), sinks.end());
     }
@@ -84,6 +87,8 @@ void LoggerManager::createLogger(const ModuleLoggerConfig& config) {
     spdlog::register_logger(logger);
 
     loggers_[config.module_name_] = logger;
+
+    return logger;
 }
 
 }  // namespace slog

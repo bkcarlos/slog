@@ -1,24 +1,25 @@
 from conan import ConanFile
-from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
+from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout
+from conan.tools.files import copy
+import os
 
 class SlogRecipe(ConanFile):
     name = "slog"
     version = "1.0.0"
 
-    # Optional metadata
-    license = "<Put the package license here>"
+    license = "MIT"
     author = "bkcarlos@outlook.com"
     url = "https://github.com/bkcarlos/slog"
-    description = "warpper for spdlog"
+    description = "Wrapper for spdlog"
     topics = ("spdlog", "log", "logger")
 
-    # Binary configuration
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = {"shared": False, "fPIC": True}
 
-    # Sources are located in the same place as this recipe, copy them to the recipe
-    exports_sources = "CMakeLists.txt", "wrapping/*", "spdlog/*"
+    # requires = "spdlog/1.11.0"
+
+    exports_sources = "CMakeLists.txt", "include/*", "src/*", "spdlog/*"
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -28,8 +29,6 @@ class SlogRecipe(ConanFile):
         cmake_layout(self)
 
     def generate(self):
-        deps = CMakeDeps(self)
-        deps.generate()
         tc = CMakeToolchain(self)
         tc.generate()
 
@@ -39,8 +38,14 @@ class SlogRecipe(ConanFile):
         cmake.build()
 
     def package(self):
+        # 使用 CMake 的安装目标
         cmake = CMake(self)
         cmake.install()
 
+        # 如果需要额外复制头文件
+        copy(self, "*.h", src=os.path.join(self.source_folder, "include"), dst=os.path.join(self.package_folder, "include"))
+        copy(self, "*.hpp", src=os.path.join(self.source_folder, "include"), dst=os.path.join(self.package_folder, "include"))
+
     def package_info(self):
         self.cpp_info.libs = ["slog"]
+        self.cpp_info.includedirs = ["include"]

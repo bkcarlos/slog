@@ -14,7 +14,7 @@ LoggerManager::~LoggerManager() {
 
 void LoggerManager::init(const LoggerConfig& config) {
     std::lock_guard<std::mutex> lock(mutex_);
-
+    log_dir_ = config.log_dir_;
     spdlog::init_thread_pool(config.queue_size_, config.thread_count_);
     init_spdlog_pool_ = true;
     for (const auto& module_logger_config : config.module_logger_configs_) {
@@ -70,7 +70,7 @@ const std::shared_ptr<spdlog::logger> LoggerManager::createLogger(const ModuleLo
     }
     if (config.use_file_) {
         auto file_sink =
-            std::make_shared<spdlog::sinks::rotating_file_sink_mt>(config.module_name_ + ".log", config.max_file_size_, config.max_files_);
+            std::make_shared<spdlog::sinks::rotating_file_sink_mt>(log_dir_ + "/" + config.module_name_ + ".log", config.max_file_size_, config.max_files_);
         file_sink->set_pattern(config.pattern_);
         sinks.push_back(file_sink);
     }

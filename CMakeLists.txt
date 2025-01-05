@@ -21,8 +21,8 @@ add_subdirectory(spdlog)
 
 # 定义头文件和源文件路径
 set(SPDLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/spdlog/include)
-set(SLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/wrapping/include)
-set(SLOG_SRC_DIR ${CMAKE_SOURCE_DIR}/wrapping/src)
+set(SLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+set(SLOG_SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 
 # 打印路径信息
 message(STATUS "spdlog include directory: ${SPDLOG_INCLUDE_DIR}")
@@ -67,13 +67,13 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 # 安装头文件
-install(DIRECTORY ${SLOG_INCLUDE_DIR}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    FILES_MATCHING PATTERN "*.h"
-)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/spdlog/include/ DESTINATION include)
 message(STATUS "Install directory: ${CMAKE_INSTALL_INCLUDEDIR}")
 
 # 安装调试符号
 install(FILES $<TARGET_FILE:${PROJECT_NAME}>.debug
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+# add_subdirectory(test)

@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SPDLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/../spdlog/include)
 message(STATUS "spdlog include directory: ${SPDLOG_INCLUDE_DIR}")
 include_directories(${SPDLOG_INCLUDE_DIR})
-set(SLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/../wrapping/include)
+set(SLOG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/../include)
 message(STATUS "slog include directory: ${SLOG_INCLUDE_DIR}")
 include_directories(${SLOG_INCLUDE_DIR})
 
@@ -25,7 +25,7 @@ message(STATUS "spdlog source files: ${SPDLOG_SRC}")
 add_executable(${PROJECT_NAME}_spdlog spdlog_test.cpp ${SPDLOG_SRC})
 target_include_directories(${PROJECT_NAME}_spdlog PRIVATE ${SPDLOG_INCLUDE_DIR})
 
-add_executable(${PROJECT_NAME}_slog wrapping_test.cpp ../wrapping/src/slog.cpp ${SPDLOG_SRC})
+add_executable(${PROJECT_NAME}_slog wrapping_test.cpp ../src/slog.cpp ${SPDLOG_SRC})
 target_include_directories(${PROJECT_NAME}_slog PRIVATE ${SPDLOG_INCLUDE_DIR})
 
 # 可选：为目标设置特定编译选项

@@ -51,6 +51,8 @@
 
 namespace slog {
 
+using Logger = spdlog::logger;
+
 struct ModuleLoggerConfig final {
 public:
     ModuleLoggerConfig(const std::string& module_name, spdlog::level::level_enum log_level = spdlog::level::info)
@@ -76,13 +78,15 @@ public:
 
 struct LoggerConfig final {
 public:
-    LoggerConfig(size_t queue_size = 8192, size_t thread_count = 1)
+    LoggerConfig(size_t queue_size = 8192, size_t thread_count = 1, const std::string& log_dir = "./log")
         : queue_size_(queue_size),
-          thread_count_(thread_count) {}
+          thread_count_(thread_count),
+          log_dir_(log_dir) {}
 
 public:
     size_t queue_size_;
     size_t thread_count_;
+    std::string log_dir_;
     std::vector<ModuleLoggerConfig> module_logger_configs_;
 };
 
@@ -96,17 +100,17 @@ public:
 
     void init(const LoggerConfig& config);
 
-    const std::shared_ptr<spdlog::logger> CreateLogger(const ModuleLoggerConfig& config);
-    const std::shared_ptr<spdlog::logger> CreateLogger(const std::string& module_name);
+    const std::shared_ptr<Logger> CreateLogger(const ModuleLoggerConfig& config);
+    const std::shared_ptr<Logger> CreateLogger(const std::string& module_name);
 
     // 获取指定模块的日志器,如果不存在返回nullptr
-    const std::shared_ptr<spdlog::logger> getLogger(const std::string& module_name);
+    const std::shared_ptr<Logger> getLogger(const std::string& module_name);
 
     // 动态调整日志器的日志等级
     void setLogLevel(const std::string& module_name, spdlog::level::level_enum level);
 
     // 获取所有日志器
-    std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> getAllLoggers();
+    std::unordered_map<std::string, std::shared_ptr<Logger>> getAllLoggers();
 
 private:
     // 私有构造函数
@@ -118,12 +122,13 @@ private:
     LoggerManager& operator=(const LoggerManager&) = delete;
 
     // 创建日志器
-    const std::shared_ptr<spdlog::logger> createLogger(const ModuleLoggerConfig& config);
+    const std::shared_ptr<Logger> createLogger(const ModuleLoggerConfig& config);
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> loggers_;
+    std::unordered_map<std::string, std::shared_ptr<Logger>> loggers_;
     std::mutex mutex_;
     bool init_spdlog_pool_;
+    std::string log_dir_;
 };
 
 }  // namespace slog
